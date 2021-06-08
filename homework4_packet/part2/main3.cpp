@@ -7,15 +7,22 @@ using namespace std;
 barrier_object B;
 
 #define TEST_ITERATIONS (1024*256)
-
+int var0 = 0;
+int var1 = 0;
 atomic_int x(0);
 atomic_int y(0);
 void t0_function() {
   // complete me!
+  	B.barrier(0);
+    x.store(1, std::memory_order_seq_cst);
+  var0 = y.load(std::memory_order_seq_cst);
 }
 
 void t1_function() {
   // complete me!
+  	B.barrier(1);
+    y.store(1, std::memory_order_seq_cst);
+  var1 = x.load(std::memory_order_seq_cst);
 }
 
 
@@ -29,21 +36,29 @@ int main() {
 
   for (int i = 0; i < TEST_ITERATIONS; i++) {
     // Run a test iteration
-
+	var0 = 0;
+	var1 = 0;
+	x = 0;
+	y = 0;
+	
+    std::thread t1 = std::thread(t0_function);
+	std::thread t2 = std::thread(t1_function);
+	t1.join();
+	t2.join();
     // Record a histogram, fill in the conditions
     
-    if (false) {
+    if (var0 == 1, var1== 1) {
       output0++;
     }
-    else if (false) {
+    else if (var0 == 1, var1 == 0) {
       output1++;
     }
-    else if (false) {
+    else if (var0 == 0, var1== 1) {
       output2++;
     }
 
     // This should be the relaxed behavior
-    else if (false) {
+    else if (var0 == 0 , var1 == 0) {
       output3++;
     }
 
@@ -51,10 +66,10 @@ int main() {
 
   // Complete the print out using your output instantiations
   cout << "histogram of different observations:" << endl;
-  cout << "output0: <FILL IN OUTPUT> " << output0 << endl;
-  cout << "output1: <FILL IN OUTPUT> " << output1 << endl;
-  cout << "output2: <FILL IN OUTPUT> " << output2 << endl;
-  cout << "output3: <FILL IN OUTPUT> " << output3 << endl << endl;
+  cout << "output0: var0 = 1, var1 = 1 " << output0 << endl;
+  cout << "output1: var0 = 1, var1 = 0 " << output1 << endl;
+  cout << "output2: var0 = 0, var1 = 1 " << output2 << endl;
+  cout << "output3: var0 = 0, var1 = 0 " << output3 << endl << endl;
   cout << "relaxed behavior frequency: " << float(output3)/float(TEST_ITERATIONS) << endl;
   
   return 0;

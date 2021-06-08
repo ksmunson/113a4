@@ -1,4 +1,5 @@
 #include <atomic>
+#include <iostream>
 
 class barrier_object {
  public:
@@ -8,12 +9,35 @@ class barrier_object {
 
   void init(int num_threads) {
     // Implement me
+	count = num_threads;
+	size = num_threads;
+	sense = false;
+	threadSense =  (std::atomic_bool*) malloc((num_threads + 1) *sizeof(std::atomic_bool));
+	for (int j = 0; j < num_threads; j++){
+		threadSense[j] = !(sense.load());
+	}
   }
 
   void barrier(int tid) {
     // Implement me
+	bool mySense = threadSense[tid].load();
+	int position = atomic_fetch_sub(&count, 1);
+	if (position == 1) {
+		count = size;
+		sense = mySense;
+		//std::cout << "ok to go ahead" << tid << std::endl;
+	} else {
+		while (sense.load() != mySense) {
+			//std::cout << "waiting tid:" << tid << std::endl;
+		}
+	}
+	threadSense[tid] = !mySense;
   }
 
 private:
   // Give me some private variables
+  std::atomic_int count;
+  int size;
+  std::atomic_bool sense;
+  std::atomic_bool *threadSense;
 };
